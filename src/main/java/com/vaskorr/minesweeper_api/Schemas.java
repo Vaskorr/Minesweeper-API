@@ -8,6 +8,12 @@ public class Schemas {
         private int height;
         private int mines_count;
 
+        public NewGameRequest(int width, int height, int mines_count) {
+            this.width = width;
+            this.height = height;
+            this.mines_count = mines_count;
+        }
+
         public int getWidth() {
             return width;
         }
@@ -37,6 +43,12 @@ public class Schemas {
         private String game_id;
         private int col;
         private int row;
+
+        public GameTurnRequest(String game_id, int col, int row) {
+            this.game_id = game_id;
+            this.col = col;
+            this.row = row;
+        }
 
         public String getGame_id() {
             return game_id;
@@ -70,6 +82,15 @@ public class Schemas {
         private int mines_count;
         private boolean completed;
         private List<List<Character>> field;
+
+        public GameInfoResponse(String game_id, int width, int height, int mines_count, boolean completed, List<List<Character>> field) {
+            this.game_id = game_id;
+            this.width = width;
+            this.height = height;
+            this.mines_count = mines_count;
+            this.completed = completed;
+            this.field = field;
+        }
 
         public String getGame_id() {
             return game_id;
@@ -122,6 +143,10 @@ public class Schemas {
 
     public static class ErrorResponse{
         private String error;
+
+        public ErrorResponse(String error) {
+            this.error = error;
+        }
 
         public String getError() {
             return error;
