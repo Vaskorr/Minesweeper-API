@@ -1,8 +1,6 @@
 package com.vaskorr.minesweeper_api;
 
 
-import org.json.JSONObject;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -15,10 +13,15 @@ public class GameSession {
     private int mines_count;
     private boolean completed;
     private boolean win;
+    private String error;
     private List<List<Integer>> field;
     private List<List<Boolean>> opened_cells;
 
     public GameSession(int width, int height, int mines_count) {
+        this.error = "";
+        if (width > 30 || height > 30 || mines_count > width * height - 1){
+            error = "Invalid game parameters. \nheight <= 30\nwidht <= 30\nmines count <= heght * width - 1";
+        }
         this.game_id = UUID.randomUUID().toString();
         this.width = width;
         this.height = height;
@@ -113,11 +116,21 @@ public class GameSession {
         return charField;
     }
 
-
-
     public void makeTurn(int row, int col){
-        if (!isValidCell(row, col) || opened_cells.get(row).get(col)) {
-            return; // Invalid move or cell already opened
+        if (completed){
+            // You can't do your turn after the end of the game
+            error = "The game is already over";
+            return;
+        }
+        if (opened_cells.get(row).get(col)){
+            // You can't open opened cell
+            error = "You already open this cell";
+            return;
+        }
+        if (!isValidCell(row, col)) {
+            // Wrong cell coords
+            error = "Invalid cell: wrong coordinates";
+            return;
         }
         opened_cells.get(row).set(col, true);
         if (field.get(row).get(col) == 9){
@@ -176,5 +189,14 @@ public class GameSession {
 
     public String getGame_id() {
         return game_id;
+    }
+
+    public Schemas.ErrorResponse isRequestInvalid(){
+        if (error.isEmpty()){
+            return null;
+        }
+        Schemas.ErrorResponse errorResponse = new Schemas.ErrorResponse(error);
+        error = "";
+        return errorResponse;
     }
 }

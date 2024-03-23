@@ -18,22 +18,28 @@ public class RestApiController {
     @PostMapping(path = "api/new",
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Schemas.GameInfoResponse> newGame(@RequestBody Schemas.NewGameRequest newGameRequest){
+    public ResponseEntity<?> newGame(@RequestBody Schemas.NewGameRequest newGameRequest){
+
         GameSession game = new GameSession(newGameRequest.getWidth(), newGameRequest.getHeight(), newGameRequest.getMines_count());
         games.put(game.getGame_id(), game);
+
+        Schemas.ErrorResponse errors = game.isRequestInvalid();
+        if (errors != null){
+            return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
+        }
         return new ResponseEntity<>(game.getGameState(), HttpStatus.OK);
     }
 
     @PostMapping(path = "api/turn",
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Schemas.GameInfoResponse> newTurn(@RequestBody Schemas.GameTurnRequest gameTurnRequest){
+    public ResponseEntity<?> newTurn(@RequestBody Schemas.GameTurnRequest gameTurnRequest){
         games.get(gameTurnRequest.getGame_id()).makeTurn(gameTurnRequest.getRow(), gameTurnRequest.getCol());
-        return new ResponseEntity<>(games.get(gameTurnRequest.getGame_id()).getGameState(), HttpStatus.OK);
-    }
 
-    @RequestMapping(method = RequestMethod.OPTIONS, path = "api/new")
-    public ResponseEntity<String> optionsRequest(){
-        return new ResponseEntity<>("OK", HttpStatus.OK);
+        Schemas.ErrorResponse errors = games.get(gameTurnRequest.getGame_id()).isRequestInvalid();
+        if (errors != null){
+            return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
+        }
+        return new ResponseEntity<>(games.get(gameTurnRequest.getGame_id()).getGameState(), HttpStatus.OK);
     }
 }
