@@ -7,20 +7,21 @@ import java.util.UUID;
 import java.util.Random;
 
 public class GameSession {
-    private String game_id;
-    private int width;
-    private int height;
-    private int mines_count;
+    private final String game_id;
+    private final int width;
+    private final int height;
+    private final int mines_count;
     private boolean completed;
     private boolean win;
     private String error;
-    private List<List<Integer>> field;
-    private List<List<Boolean>> opened_cells;
+    private final List<List<Integer>> field;
+    private final List<List<Boolean>> opened_cells;
 
+    // Constructor
     public GameSession(int width, int height, int mines_count) {
         this.error = "";
         if (width > 30 || height > 30 || mines_count > width * height - 1){
-            error = "Invalid game parameters. \nheight <= 30\nwidht <= 30\nmines count <= heght * width - 1";
+            error = "Invalid game parameters. \nheight <= 30\nwidth <= 30\nmines count <= height * width - 1";
         }
         this.game_id = UUID.randomUUID().toString();
         this.width = width;
@@ -33,6 +34,8 @@ public class GameSession {
         fillField();
     }
 
+
+    // Private methods
     private void fillField(){
         //basic fill
         for (int i = 0; i < height; i++){
@@ -116,6 +119,59 @@ public class GameSession {
         return charField;
     }
 
+    private boolean isGameWin(){
+        int k = 0;
+        for (int i = 0; i < height; i++) {
+            for (int j = 0; j < width; j++) {
+                if (opened_cells.get(i).get(j)){
+                    k+=1;
+                }
+            }
+        }
+        return k == height * width - mines_count;
+    }
+
+    private void openAdjacentCells(int row, int col) {
+        int[] dx = {-1, -1, -1, 0, 0, 1, 1, 1};
+        int[] dy = {-1, 0, 1, -1, 1, -1, 0, 1};
+
+        for (int i = 0; i < 8; i++) {
+            int newRow = row + dx[i];
+            int newCol = col + dy[i];
+            if (isValidCell(newRow, newCol) && !opened_cells.get(newRow).get(newCol)) {
+                opened_cells.get(newRow).set(newCol, true);
+                if (field.get(newRow).get(newCol) == 0) {
+                    openAdjacentCells(newRow, newCol);
+                }
+            }
+        }
+    }
+
+
+    // Public methods
+    public Schemas.GameInfoResponse getGameState(){
+        Schemas.GameInfoResponse gameInfo = new Schemas.GameInfoResponse(game_id,
+                width,
+                height,
+                mines_count,
+                completed,
+                getCharacterField());
+        return gameInfo;
+    }
+
+    public String getGame_id() {
+        return game_id;
+    }
+
+    public Schemas.ErrorResponse isRequestInvalid(){
+        if (error.isEmpty()){
+            return null;
+        }
+        Schemas.ErrorResponse errorResponse = new Schemas.ErrorResponse(error);
+        error = "";
+        return errorResponse;
+    }
+
     public void makeTurn(int row, int col){
         if (completed){
             // You can't do your turn after the end of the game
@@ -147,56 +203,5 @@ public class GameSession {
             completed = true;
             win = true;
         }
-    }
-
-    private boolean isGameWin(){
-        int k = 0;
-        for (int i = 0; i < height; i++) {
-            for (int j = 0; j < width; j++) {
-                if (opened_cells.get(i).get(j)){
-                    k+=1;
-                }
-            }
-        }
-        return k == height * width - mines_count;
-    }
-
-    private void openAdjacentCells(int row, int col) {
-        int[] dx = {-1, -1, -1, 0, 0, 1, 1, 1};
-        int[] dy = {-1, 0, 1, -1, 1, -1, 0, 1};
-
-        for (int i = 0; i < 8; i++) {
-            int newRow = row + dx[i];
-            int newCol = col + dy[i];
-            if (isValidCell(newRow, newCol) && !opened_cells.get(newRow).get(newCol)) {
-                opened_cells.get(newRow).set(newCol, true);
-                if (field.get(newRow).get(newCol) == 0) {
-                    openAdjacentCells(newRow, newCol);
-                }
-            }
-        }
-    }
-
-    public Schemas.GameInfoResponse getGameState(){
-        Schemas.GameInfoResponse gameInfo = new Schemas.GameInfoResponse(game_id,
-                width,
-                height,
-                mines_count,
-                completed,
-                getCharacterField());
-        return gameInfo;
-    }
-
-    public String getGame_id() {
-        return game_id;
-    }
-
-    public Schemas.ErrorResponse isRequestInvalid(){
-        if (error.isEmpty()){
-            return null;
-        }
-        Schemas.ErrorResponse errorResponse = new Schemas.ErrorResponse(error);
-        error = "";
-        return errorResponse;
     }
 }
