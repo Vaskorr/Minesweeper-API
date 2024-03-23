@@ -6,6 +6,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.Random;
 
 public class GameSession {
     private String game_id;
@@ -60,13 +61,13 @@ public class GameSession {
         for (int i = 0; i < height; i++) {
             for (int j = 0; j < width; j++) {
                 if (field.get(i).get(j) == 9) {
-                    updateNumbers(field, i, j);
+                    updateNumbers(i, j);
                 }
             }
         }
     }
 
-    private static void updateNumbers(List<List<Integer>> board, int row, int col) {
+    private void updateNumbers(int row, int col) {
         int[] dx = {-1, -1, -1, 0, 0, 1, 1, 1};
         int[] dy = {-1, 0, 1, -1, 1, -1, 0, 1};
 
@@ -74,14 +75,14 @@ public class GameSession {
             int newRow = row + dx[i];
             int newCol = col + dy[i];
 
-            if (isValidCell(board, newRow, newCol) && board.get(newRow).get(newCol) != 9) {
-                board.get(newRow).set(newCol, board.get(newRow).get(newCol) + 1);
+            if (isValidCell(newRow, newCol) && field.get(newRow).get(newCol) != 9) {
+                field.get(newRow).set(newCol, field.get(newRow).get(newCol) + 1);
             }
         }
     }
 
-    private static boolean isValidCell(List<List<Integer>> board, int row, int col) {
-        return row >= 0 && row < board.size() && col >= 0 && col < board.get(0).size();
+    private boolean isValidCell(int row, int col) {
+        return row >= 0 && row < field.size() && col >= 0 && col < field.get(0).size();
     }
 
     private List<List<Character>> getCharacterField() {
@@ -112,14 +113,66 @@ public class GameSession {
         return charField;
     }
 
-    public String getGameState(){
+    public void makeTurn(int row, int col){
+        if (!isValidCell(row, col) || opened_cells.get(row).get(col)) {
+            return; // Invalid move or cell already opened
+        }
+        opened_cells.get(row).set(col, true);
+
+        if (field.get(row).get(col) == 0) {
+            // Open adjacent cells if current cell is empty
+            openAdjacentCells(row, col);
+        }
+    }
+
+    private void openAdjacentCells(int row, int col) {
+        int[] dx = {-1, -1, -1, 0, 0, 1, 1, 1};
+        int[] dy = {-1, 0, 1, -1, 1, -1, 0, 1};
+
+        for (int i = 0; i < 8; i++) {
+            int newRow = row + dx[i];
+            int newCol = col + dy[i];
+            if (isValidCell(newRow, newCol) && !opened_cells.get(newRow).get(newCol)) {
+                opened_cells.get(newRow).set(newCol, true);
+                if (field.get(newRow).get(newCol) == 0) {
+                    openAdjacentCells(newRow, newCol);
+                }
+            }
+        }
+    }
+
+    //DEBUG
+    public void printField(){
+        for (int i = 0; i < height; i++){
+            for (int j = 0; j < width; j++){
+                System.out.print(field.get(i).get(j));
+            }
+            System.out.println();
+        }
+    }
+
+    //DEBUG
+    public void printHiddenField(){
+        List<List<Character>> hf = getCharacterField();
+        for (int i = 0; i < height; i++){
+            for (int j = 0; j < width; j++){
+                System.out.print(hf.get(i).get(j));
+            }
+            System.out.println();
+        }
+    }
+
+    public Schemas.GameInfoResponse getGameState(){
         Schemas.GameInfoResponse gameInfo = new Schemas.GameInfoResponse(game_id,
                 width,
                 height,
                 mines_count,
                 completed,
                 getCharacterField());
-        JSONObject gameState = new JSONObject(gameInfo);
-        return gameState.toString();
+        return gameInfo;
+    }
+
+    public String getGame_id() {
+        return game_id;
     }
 }
