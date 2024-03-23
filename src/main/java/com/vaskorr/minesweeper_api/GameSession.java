@@ -113,16 +113,39 @@ public class GameSession {
         return charField;
     }
 
+
+
     public void makeTurn(int row, int col){
         if (!isValidCell(row, col) || opened_cells.get(row).get(col)) {
             return; // Invalid move or cell already opened
         }
         opened_cells.get(row).set(col, true);
-
+        if (field.get(row).get(col) == 9){
+            // It's mine: game over
+            completed = true;
+            return;
+        }
         if (field.get(row).get(col) == 0) {
             // Open adjacent cells if current cell is empty
             openAdjacentCells(row, col);
         }
+        if (isGameWin()){
+            // You win!
+            completed = true;
+            win = true;
+        }
+    }
+
+    private boolean isGameWin(){
+        int k = 0;
+        for (int i = 0; i < height; i++) {
+            for (int j = 0; j < width; j++) {
+                if (opened_cells.get(i).get(j)){
+                    k+=1;
+                }
+            }
+        }
+        return k == height * width - mines_count;
     }
 
     private void openAdjacentCells(int row, int col) {
@@ -138,27 +161,6 @@ public class GameSession {
                     openAdjacentCells(newRow, newCol);
                 }
             }
-        }
-    }
-
-    //DEBUG
-    public void printField(){
-        for (int i = 0; i < height; i++){
-            for (int j = 0; j < width; j++){
-                System.out.print(field.get(i).get(j));
-            }
-            System.out.println();
-        }
-    }
-
-    //DEBUG
-    public void printHiddenField(){
-        List<List<Character>> hf = getCharacterField();
-        for (int i = 0; i < height; i++){
-            for (int j = 0; j < width; j++){
-                System.out.print(hf.get(i).get(j));
-            }
-            System.out.println();
         }
     }
 
