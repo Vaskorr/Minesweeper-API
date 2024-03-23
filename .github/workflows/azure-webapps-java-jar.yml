@@ -46,6 +46,9 @@ jobs:
           distribution: ${{ env.DISTRIBUTION }}
           cache: 'gradle'
 
+      - name: Give permissions
+        run: chmod +x gradlew
+        
       - name: Build with Gradle
         run: ./gradlew bootJar
 
